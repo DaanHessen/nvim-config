@@ -882,16 +882,32 @@ require('lazy').setup({
 
   {
     "MeanderingProgrammer/render-markdown.nvim",
-    event = "BufRead *.md",
-    cmd = { "RenderMarkdown", "RenderMarkdownEnable", "RenderMarkdownDisable", "RenderMarkdownToggle", "RenderMarkdownBufEnable", "RenderMarkdownBufDisable", "RenderMarkdownBufToggle", "RenderMarkdownLog", "RenderMarkdownExpand", "RenderMarkdownContract", "RenderMarkdownDebug", "RenderMarkdownConfig" },
-    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    ft = "markdown",
+    cmd = {
+      "RenderMarkdown",
+      "RenderMarkdownEnable",
+      "RenderMarkdownDisable",
+      "RenderMarkdownToggle",
+      "RenderMarkdownBufEnable",
+      "RenderMarkdownBufDisable",
+      "RenderMarkdownBufToggle",
+      "RenderMarkdownLog",
+      "RenderMarkdownExpand",
+      "RenderMarkdownContract",
+      "RenderMarkdownDebug",
+      "RenderMarkdownConfig"
+    },
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      "nvim-tree/nvim-web-devicons"
+    },
     config = function()
       require("render-markdown").setup({
-        enabled = true, -- Enable the in-buffer markdown rendering by default
-        render_modes = { "n", "v", "i" }, -- Modes in which to show the rendered view
-        file_types = { "markdown" }, -- Only run on markdown files
-        max_file_size = 10.0, -- Ignore files larger than 10 MB
-        preset = "none", -- You can choose a preset, e.g.: "lazy" or "obsidian"
+        enabled = true,
+        render_modes = { "n", "v", "i" },
+        file_types = { "markdown" },
+        max_file_size = 10.0,
+        preset = "none",
       })
     end,
   },
@@ -991,6 +1007,181 @@ require('lazy').setup({
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
+
+  -- [Filetree and Tabs Plugins]
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-tree/nvim-web-devicons",
+      "MunifTanjim/nui.nvim",
+    },
+    cmd = { "Neotree" },
+    keys = {
+      { "<leader>ft", "<cmd>Neotree toggle focus<cr>", desc = "Toggle Filetree" },
+    },
+    init = function()
+      vim.g.neo_tree_remove_legacy_commands = true
+    end,
+    config = function()
+      require("neo-tree").setup({
+        close_if_last_window = false,
+        popup_border_style = "rounded",
+        enable_git_status = true,
+        enable_diagnostics = true,
+        use_libuv_file_watcher = true,
+        sources = {
+          "filesystem",
+          "buffers",
+          "git_status",
+          -- Disable unused sources for better performance
+          -- "document_symbols",
+        },
+        source_selector = {
+          winbar = false, -- Disable winbar for better performance
+        },
+        log = {
+          enable = false, -- Disable logging for better performance
+          types = {
+            diagnostics = true,
+            git = true,
+            watcher = true,
+          },
+        },
+        window = {
+          position = "left",
+          width = 30,
+          mapping_options = {
+            noremap = true,
+            nowait = true,
+          },
+          mappings = {
+            ["<space>"] = { 
+              "toggle_node", 
+              nowait = false,
+            },
+            ["<2-LeftMouse>"] = "open",
+            ["<cr>"] = "open",
+            ["l"] = "open",
+            ["h"] = "close_node",
+            ["a"] = { 
+              "add",
+              config = {
+                show_path = "relative"
+              }
+            },
+            ["A"] = "add_directory",
+            ["d"] = "delete",
+            ["r"] = "rename",
+            ["y"] = "copy_to_clipboard",
+            ["x"] = "cut_to_clipboard",
+            ["p"] = "paste_from_clipboard",
+            ["c"] = "copy",
+            ["m"] = "move",
+            ["q"] = "close_window",
+            ["R"] = "refresh",
+            ["?"] = "show_help",
+          }
+        },
+        filesystem = {
+          filtered_items = {
+            visible = false,
+            hide_dotfiles = false,
+            hide_gitignored = true,
+            cache_hidden = true, -- Cache hidden files for better performance
+          },
+          follow_current_file = {
+            enabled = true,
+            leave_dirs_open = true,
+            update_root = false, -- Disable root updates for better performance
+          },
+          group_empty_dirs = true,
+          hijack_netrw_behavior = "open_default",
+          use_libuv_file_watcher = true,
+          scan_mode = "fast", -- Use fast scan mode for better performance
+          bind_to_cwd = true, -- Bind to current working directory for better performance
+          window = {
+            mappings = {
+              ["/"] = "fuzzy_finder",
+              ["<C-x>"] = "clear_filter",
+              ["[g"] = "prev_git_modified",
+              ["]g"] = "next_git_modified",
+            },
+          },
+        },
+        default_component_configs = {
+          indent = { padding = 0 },
+          icon = {
+            folder_closed = "",
+            folder_open = "",
+            folder_empty = "",
+            default = "",
+          },
+          modified = {
+            symbol = "[+]",
+            highlight = "NeoTreeModified",
+          },
+          message = {
+            highlight = "NeoTreeMessage", -- Fix message colors
+            require_normal = true,
+          },
+          git_status = {
+            symbols = {
+              added = "",
+              modified = "",
+              deleted = "✖",
+              renamed = "󰁕",
+              untracked = "",
+              ignored = "",
+              unstaged = "󰄱",
+              staged = "",
+              conflict = "",
+            },
+            align = "right",
+          },
+        },
+        renderers = {
+          directory = {
+            { "indent" },
+            { "icon" },
+            { "current_filter" },
+            { "name" },
+            { "clipboard" },
+            { "diagnostics", errors_only = true },
+            { "git_status" },
+          },
+        },
+        event_handlers = {
+          {
+            event = "file_opened",
+            handler = function()
+              require("neo-tree.command").execute({ action = "close" })
+            end,
+          },
+        },
+      })
+
+      -- Add highlight groups for messages
+      vim.api.nvim_set_hl(0, "NeoTreeMessage", { fg = "#89b4fa", bold = true })
+      vim.api.nvim_set_hl(0, "NeoTreeModified", { fg = "#f38ba8" })
+    end,
+  },
+  {
+    "akinsho/bufferline.nvim",
+    version = "*",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("bufferline").setup({
+        options = {
+          diagnostics = "nvim_lsp",
+          offsets = {
+            { filetype = "neo-tree", text = "File Explorer", text_align = "left" },
+          },
+        },
+      })
+    end,
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -1015,3 +1206,52 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- [Custom key mapping: Open project terminal in a new tab using Windows Terminal]
+vim.keymap.set("n", "<leader>ot", function()
+  local cwd = vim.fn.getcwd()
+  local cmd = "wt.exe new-tab -d " .. vim.fn.shellescape(cwd)
+  vim.fn.jobstart(cmd, { detach = true })
+end, { desc = "Open project terminal in a new tab" })
+
+-- [Autocommand: Set cursor position for Markdown files]
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*.md",
+  callback = function()
+    local found = false
+    local total = vim.fn.line("$")
+    for i = 1, math.min(10, total) do
+      local line = vim.fn.getline(i)
+      if line:match("^%s*$") then
+        vim.api.nvim_win_set_cursor(0, { i, 0 })
+        found = true
+        break
+      end
+    end
+    if not found then
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+    end
+  end,
+})
+
+-- [Key mapping: Toggle FileTree]
+-- vim.keymap.set("n", "<leader>ft", ":Neotree toggle<CR>", { desc = "Toggle FileTree" })
+
+-- [Key mapping: Toggle Tabline]
+vim.keymap.set("n", "<leader>tt", function()
+  if vim.o.showtabline == 0 then
+    vim.o.showtabline = 2
+  else
+    vim.o.showtabline = 0
+  end
+end, { desc = "Toggle Tabline" })
+
+-- [Key mapping: Toggle both FileTree and Tabline]
+vim.keymap.set("n", "<leader>ftt", function()
+  vim.cmd("Neotree toggle")
+  if vim.o.showtabline == 0 then
+    vim.o.showtabline = 2
+  else
+    vim.o.showtabline = 0
+  end
+end, { desc = "Toggle both FileTree and Tabline" })

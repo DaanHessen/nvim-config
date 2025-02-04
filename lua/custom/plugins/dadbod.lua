@@ -33,14 +33,15 @@ return {
         'plsql',
       },
       callback = function()
-        require('cmp').setup.buffer({
+        require('cmp').setup.buffer {
           sources = {
             { name = 'vim-dadbod-completion' },
             { name = 'buffer' },
             { name = 'luasnip' },
           },
-        })
+        }
       end,
     })
   end,
-} 
+}
+
