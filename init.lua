@@ -1167,6 +1167,26 @@ require('lazy').setup({
       })
     end,
   },
+  {
+    "akinsho/toggleterm.nvim",
+    version = "*",
+    event = "VimEnter",
+    config = function()
+      require("toggleterm").setup({
+        size = 10,
+        open_mapping = [[<c-\>]],
+        shade_terminals = true,
+        shading_factor = 2,
+        direction = "horizontal",  -- You can change this to 'vertical', 'float', or 'tab' if desired
+        start_in_insert = true,
+        persist_size = true,
+        close_on_exit = true,
+      })
+      vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "ToggleTerm: Enter Normal mode" })
+      vim.keymap.set("n", "<leader>tt", "<cmd>ToggleTerm<CR>", { desc = "Toggle Terminal" })
+      vim.api.nvim_create_user_command("TermTab", "tabnew | ToggleTerm", { desc = "Open Terminal in a new tab" })
+    end,
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
