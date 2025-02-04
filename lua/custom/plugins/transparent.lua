@@ -3,12 +3,13 @@ return {
   config = function()
     require('transparent').setup {
       extra_groups = { -- add any existing groups that should be transparent
-        'NormalFloat', 
+        'NormalFloat',
         'NvimTreeNormal',
         'NeoTreeNormal',
-        'TelescopeNormal'
+        'TelescopeNormal',
       },
     }
     vim.cmd [[TransparentEnable]]
-  end
-} 
+  end,
+}
+

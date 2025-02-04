@@ -4,11 +4,13 @@ return {
   dependencies = {
     "MunifTanjim/nui.nvim",
     "nvim-treesitter/nvim-treesitter",
+    "hrsh7th/nvim-cmp",
+    "rcarriga/nvim-notify",
   },
   opts = {
     cmdline = {
       enabled = true,
-      view = "cmdline", -- use the simple cmdline view
+      view = "cmdline_popup",
       format = {
         cmdline = { pattern = "^:", icon = "", lang = "vim" },
         search_down = { kind = "search", pattern = "^/", icon = " ", lang = "regex" },
@@ -16,6 +18,20 @@ return {
         filter = { pattern = "^:%s*!", icon = "$", lang = "bash" },
         lua = { pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" }, icon = "", lang = "lua" },
         help = { pattern = "^:%s*he?l?p?%s+", icon = "󰋖" },
+      },
+      opts = {
+        position = {
+          row = "90%",
+          col = "50%",
+        },
+        size = {
+          width = 60,
+          height = "auto",
+        },
+        border = {
+          style = "rounded",
+          padding = { 0, 1 },
+        },
       },
     },
     messages = {
@@ -27,7 +43,31 @@ return {
       view_search = false,
     },
     popupmenu = {
-      enabled = false, -- disable the noice popupmenu
+      enabled = true,
+      backend = "nui",
+      kind_icons = {
+        Class = " ",
+        Color = " ",
+        Constant = " ",
+        Constructor = " ",
+        Enum = "了 ",
+        EnumMember = " ",
+        Field = " ",
+        File = " ",
+        Folder = " ",
+        Function = " ",
+        Interface = " ",
+        Keyword = " ",
+        Method = "ƒ ",
+        Module = " ",
+        Property = " ",
+        Snippet = " ",
+        Struct = " ",
+        Text = " ",
+        Unit = " ",
+        Value = " ",
+        Variable = " ",
+      },
     },
     -- Overrides help improve markdown rendering in LSP messages.
     overrides = {
@@ -36,11 +76,11 @@ return {
       ["cmp.entry.get_documentation"] = true,
     },
     presets = {
-      bottom_search = true,         -- use a classic bottom cmdline for search
-      command_palette = false,      -- disable command palette
-      long_message_to_split = true, -- long messages will be sent to a split
-      inc_rename = true,           -- enables an input dialog for inc-rename.nvim
-      lsp_doc_border = true,       -- add a border to hover docs and signature help
+      bottom_search = false,       -- use popup for search
+      command_palette = true,      -- position the cmdline and popupmenu together
+      long_message_to_split = true,
+      inc_rename = true,
+      lsp_doc_border = true,
     },
     routes = {
       -- Skip displaying certain message types
@@ -51,6 +91,51 @@ return {
           find = "written",
         },
         opts = { skip = true },
+      },
+    },
+    views = {
+      cmdline_popup = {
+        position = {
+          row = "90%",
+          col = "50%",
+        },
+        size = {
+          width = 60,
+          height = "auto",
+        },
+        border = {
+          style = "rounded",
+          padding = { 0, 1 },
+        },
+        filter_options = {},
+        win_options = {
+          winhighlight = {
+            Normal = "NormalFloat",
+            FloatBorder = "FloatBorder",
+          },
+        },
+      },
+      popupmenu = {
+        relative = "editor",
+        position = {
+          row = "85%",
+          col = "50%",
+        },
+        size = {
+          width = 60,
+          height = 10,
+          max_height = 5,
+        },
+        border = {
+          style = "rounded",
+          padding = { 0, 1 },
+        },
+        win_options = {
+          winhighlight = { 
+            Normal = "Normal",
+            FloatBorder = "NoiceCmdlinePopupBorder",
+          },
+        },
       },
     },
   },
@@ -69,5 +154,28 @@ return {
     vim.keymap.set("n", "<leader>na", function()
       require("noice").cmd("all")
     end, { desc = "Noice All" })
+    
+    -- Set up some nice UI colors
+    vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#808080" })
+    vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#f4468f" })
+    
+    -- Configure notify for better messages
+    require("notify").setup({
+      background_colour = "#000000",
+      fps = 60,
+      icons = {
+        DEBUG = "",
+        ERROR = "",
+        INFO = "",
+        TRACE = "✎",
+        WARN = ""
+      },
+      level = 2,
+      minimum_width = 50,
+      render = "default",
+      stages = "fade_in_slide_out",
+      timeout = 3000,
+      top_down = true
+    })
   end,
 } 

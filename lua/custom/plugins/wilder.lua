@@ -1,47 +1,97 @@
 return {
-  'gelguy/wilder.nvim',
-  event = 'CmdlineEnter',
-  config = function()
-    local wilder = require('wilder')
-    wilder.setup({
-      modes = {':', '/', '?'},  -- Enable for command and search modes
-      next_key = '<Tab>',      -- Use tab to accept completion
-      prev_key = '<S-Tab>',    -- Use shift-tab to go back
-      accept_key = '<Right>',  -- Also accept with right arrow
-      reject_key = '<Left>',   -- Reject with left arrow
-    })
+  {
+    "xiyaowong/transparent.nvim",
+    lazy = false, -- Important: avoid lazy loading
+    priority = 1000, -- Load this before other plugins
+    config = function()
+      require("transparent").setup({
+        extra_groups = {
+          "NormalFloat", -- Make floating windows transparent
+          "FloatBorder",
+          "CmpPmenu",
+          "CmpBorder",
+          "TelescopeBorder",
+          "TelescopeNormal",
+          "TelescopePromptBorder",
+          "TelescopeResultsBorder",
+          "TelescopePreviewBorder",
+          "VertSplit",
+          "StatusLine",
+          "StatusLineNC",
+          "SignColumn",
+          "EndOfBuffer",
+          "TabLineFill",
+          "TabLine",
+          "TabLineSel",
+          "WinSeparator",
+        },
+        exclude_groups = {}, -- No exclusions
+      })
+      -- Enable transparency
+      vim.cmd("TransparentEnable")
+    end,
+  },
+  {
+    "hrsh7th/nvim-cmp",
+    event = "CmdlineEnter",
+    dependencies = {
+      "hrsh7th/cmp-cmdline",
+      "hrsh7th/cmp-path",
+    },
+    config = function()
+      local cmp = require("cmp")
 
-    -- Enable fuzzy completion and use nvim-cmp's sorting
-    wilder.set_option('pipeline', {
-      wilder.branch(
-        wilder.cmdline_pipeline({
-          fuzzy = 1,
-          set_pcre2_pattern = 1,
+      -- Set up floating window options with transparency support
+      local window_config = {
+        completion = cmp.config.window.bordered({
+          winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:PmenuSel",
         }),
-        wilder.python_search_pipeline({
-          pattern = wilder.python_fuzzy_pattern(),
-          sorter = wilder.python_difflib_sorter(),
-          engine = 're',
-        })
-      ),
-    })
+        documentation = cmp.config.window.bordered({
+          winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder",
+        }),
+      }
 
-    -- Use simple renderer at bottom of screen
-    wilder.set_option('renderer', wilder.renderer_mux({
-      [':'] = wilder.popupmenu_renderer({
-        highlighter = wilder.basic_highlighter(),
-        left = {' ', wilder.popupmenu_devicons()},
-        right = {' ', wilder.popupmenu_scrollbar()},
-        pumblend = 20,
-        min_width = '100%',
-        min_height = '0%',
-        max_height = '20%',
-        border = 'none',
-        prompt_position = 'bottom',
-      }),
-      ['/'] = wilder.wildmenu_renderer({
-        highlighter = wilder.basic_highlighter(),
-      }),
-    }))
-  end,
+      cmp.setup.cmdline(":", {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = cmp.config.sources({
+          { name = "cmdline" },
+          { name = "path" },
+        }),
+        window = window_config,
+      })
+
+      cmp.setup.cmdline("/", {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = { { name = "buffer" } },
+        window = window_config,
+      })
+
+      cmp.setup.cmdline("?", {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = { { name = "buffer" } },
+        window = window_config,
+      })
+    end,
+  },
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    ft = { "markdown" },
+    build = function()
+      vim.fn["mkdp#util#install"]()
+    end,
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
+      -- Use a specific browser
+      vim.g.mkdp_browser = 'firefox' -- or 'chrome'
+      -- Auto start preview
+      vim.g.mkdp_auto_start = 1
+      -- Auto refresh preview
+      vim.g.mkdp_refresh_slow = 0
+      -- Set preview theme
+      vim.g.mkdp_theme = 'dark'
+      -- Key mappings
+      vim.keymap.set('n', '<C-p>', '<Plug>MarkdownPreviewToggle', { silent = true })
+    end,
+  },
 } 

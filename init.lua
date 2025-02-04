@@ -219,13 +219,16 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
-  if vim.v.shell_error ~= 0 then
-    error('Error cloning lazy.nvim:\n' .. out)
-  end
-end ---@diagnostic disable-next-line: undefined-field
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    'git',
+    'clone',
+    '--filter=blob:none',
+    'https://github.com/folke/lazy.nvim.git',
+    '--branch=stable', -- latest stable release
+    lazypath,
+  })
+end
 vim.opt.rtp:prepend(lazypath)
 
 -- [[ Configure and install plugins ]]
@@ -867,6 +870,32 @@ require('lazy').setup({
     end,
   },
 
+  {
+    "iamcco/markdown-preview.nvim",
+    build = "cd app && npm install",
+    ft = "markdown",
+    config = function()
+      -- Automatically start markdown preview when opening a markdown file
+      vim.g.mkdp_auto_start = 1
+    end,
+  },
+
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    event = "BufRead *.md",
+    cmd = { "RenderMarkdown", "RenderMarkdownEnable", "RenderMarkdownDisable", "RenderMarkdownToggle", "RenderMarkdownBufEnable", "RenderMarkdownBufDisable", "RenderMarkdownBufToggle", "RenderMarkdownLog", "RenderMarkdownExpand", "RenderMarkdownContract", "RenderMarkdownDebug", "RenderMarkdownConfig" },
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("render-markdown").setup({
+        enabled = true, -- Enable the in-buffer markdown rendering by default
+        render_modes = { "n", "v", "i" }, -- Modes in which to show the rendered view
+        file_types = { "markdown" }, -- Only run on markdown files
+        max_file_size = 10.0, -- Ignore files larger than 10 MB
+        preset = "none", -- You can choose a preset, e.g.: "lazy" or "obsidian"
+      })
+    end,
+  },
+
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -950,6 +979,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
   require 'custom.plugins.noice',
   -- require 'kickstart.plugins.wilder',  -- wilder is no longer needed because noice.nvim provides the enhanced cmdline UI.
+  require 'custom.plugins.',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
