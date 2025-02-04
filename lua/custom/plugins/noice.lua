@@ -155,11 +155,7 @@ return {
       require("noice").cmd("all")
     end, { desc = "Noice All" })
     
-    -- Set up some nice UI colors
-    vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#808080" })
-    vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#f4468f" })
-    
-    -- Configure notify for better messages
+    -- Configure notify for animated text notifications
     require("notify").setup({
       background_colour = "#000000",
       fps = 60,
@@ -171,11 +167,23 @@ return {
         WARN = ""
       },
       level = 2,
-      minimum_width = 50,
-      render = "default",
+      minimum_width = 10,
+      render = "minimal", -- Use minimal renderer for text-only notifications
       stages = "fade_in_slide_out",
       timeout = 3000,
-      top_down = true
+      top_down = false, -- Show notifications from bottom up
+      on_open = function(win)
+        -- Set the window position to bottom right
+        local width = vim.api.nvim_win_get_width(win)
+        local height = vim.api.nvim_win_get_height(win)
+        local screen_w = vim.opt.columns:get()
+        local screen_h = vim.opt.lines:get()
+        vim.api.nvim_win_set_config(win, {
+          relative = "editor",
+          row = screen_h - height - 2,
+          col = screen_w - width - 2,
+        })
+      end
     })
   end,
 } 

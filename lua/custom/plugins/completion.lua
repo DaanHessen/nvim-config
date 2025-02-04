@@ -8,27 +8,21 @@ return {
         suggestion = {
           enabled = true,
           auto_trigger = true,
+          debounce = 75,
           keymap = {
-            accept = "<M-l>",
+            accept = "<C-l>",
             next = "<M-]>",
             prev = "<M-[>",
             dismiss = "<C-]>",
           },
         },
-        panel = { 
-          enabled = true,
-          auto_refresh = true,
-          keymap = {
-            jump_prev = "[[",
-            jump_next = "]]",
-            accept = "<CR>",
-            refresh = "gr",
-            open = "<M-CR>"
-          },
-        },
+        panel = { enabled = false },
         filetypes = {
           markdown = true,
           help = true,
+          gitcommit = true,
+          gitrebase = true,
+          ["."] = true,
         },
       })
     end,
@@ -37,7 +31,14 @@ return {
     "zbirenbaum/copilot-cmp",
     dependencies = { "zbirenbaum/copilot.lua" },
     config = function()
-      require("copilot_cmp").setup()
+      require("copilot_cmp").setup({
+        method = "getCompletionsCycling",
+        formatters = {
+          label = require("copilot_cmp.format").format_label_text,
+          insert_text = require("copilot_cmp.format").format_insert_text,
+          preview = require("copilot_cmp.format").deindent,
+        },
+      })
     end
   },
   {
@@ -57,9 +58,26 @@ return {
       local luasnip = require("luasnip")
       local lspkind = require("lspkind")
 
-      luasnip.config.setup {}
+      luasnip.config.setup {
+        region_check_events = 'InsertEnter',
+        delete_check_events = 'TextChanged',
+      }
 
       cmp.setup({
+        performance = {
+          debounce = 60,
+          throttle = 30,
+          fetching_timeout = 100,
+        },
+        completion = {
+          completeopt = 'menu,menuone,noinsert',
+          keyword_length = 1,
+          matching = {
+            disallow_fuzzy_matching = true,
+            disallow_partial_matching = false,
+            disallow_prefix_unmatching = true,
+          },
+        },
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
@@ -68,9 +86,15 @@ return {
         window = {
           completion = cmp.config.window.bordered({
             winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+            scrollbar = true,
+            col_offset = 0,
+            side_padding = 1,
           }),
           documentation = cmp.config.window.bordered({
             winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+            scrollbar = true,
+            max_height = 15,
+            max_width = 60,
           }),
         },
         formatting = {
@@ -78,20 +102,38 @@ return {
             mode = "symbol_text",
             maxwidth = 50,
             ellipsis_char = "...",
-            symbol_map = { Copilot = "" }
+            symbol_map = { Copilot = "" },
+            before = function(entry, vim_item)
+              vim_item.menu = ({
+                copilot = "[AI]",
+                nvim_lsp = "[LSP]",
+                luasnip = "[Snip]",
+                buffer = "[Buf]",
+                path = "[Path]",
+              })[entry.source.name]
+              return vim_item
+            end,
           })
         },
         mapping = cmp.mapping.preset.insert({
-          ['<C-n>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
-          ['<C-p>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+          ['<C-n>'] = cmp.mapping.select_next_item(),
+          ['<C-p>'] = cmp.mapping.select_prev_item(),
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
           ['<C-Space>'] = cmp.mapping.complete(),
           ['<C-e>'] = cmp.mapping.abort(),
-          ['<CR>'] = cmp.mapping.confirm({ select = true }),
+          ['<C-y>'] = cmp.mapping.confirm({ 
+            behavior = cmp.ConfirmBehavior.Replace,
+            select = true 
+          }),
           ['<Tab>'] = cmp.mapping(function(fallback)
             if cmp.visible() then
-              cmp.select_next_item()
+              local entry = cmp.get_selected_entry()
+              if entry then
+                cmp.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false })
+              else
+                cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+              end
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
             else
@@ -109,32 +151,31 @@ return {
           end, { 'i', 's' }),
         }),
         sources = cmp.config.sources({
-          { name = "copilot", group_index = 2 },
-          { name = "nvim_lsp", group_index = 2 },
-          { name = "luasnip", group_index = 2 },
-          { name = "buffer", group_index = 2 },
-          { name = "path", group_index = 2 },
+          { name = "copilot", group_index = 1, priority = 100 },
+          { name = "nvim_lsp", group_index = 1, priority = 90 },
+          { name = "luasnip", group_index = 2, priority = 80 },
+          { name = "buffer", group_index = 2, priority = 70, keyword_length = 3 },
+          { name = "path", group_index = 2, priority = 60 },
         }),
         experimental = {
-          ghost_text = true,
+          ghost_text = false,
         },
+        preselect = cmp.PreselectMode.None,
       })
 
-      -- Use buffer source for `/` and `?`
       cmp.setup.cmdline({ '/', '?' }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = {
-          { name = 'buffer' }
+          { name = 'buffer', keyword_length = 3 }
         }
       })
 
-      -- Use cmdline & path source for ':'
       cmp.setup.cmdline(':', {
         mapping = cmp.mapping.preset.cmdline(),
         sources = cmp.config.sources({
           { name = 'path' }
         }, {
-          { name = 'cmdline' }
+          { name = 'cmdline', keyword_length = 2 }
         })
       })
     end,

@@ -94,4 +94,73 @@ return {
       vim.keymap.set('n', '<C-p>', '<Plug>MarkdownPreviewToggle', { silent = true })
     end,
   },
+  "gelguy/wilder.nvim",
+  event = "CmdlineEnter",
+  config = function()
+    local wilder = require("wilder")
+    wilder.setup({
+      modes = { ":", "/", "?" },
+      next_key = "<Tab>",
+      previous_key = "<S-Tab>",
+      accept_key = "<Down>",
+      reject_key = "<Up>",
+    })
+
+    -- Enable fuzzy matching for commands and buffers
+    wilder.set_option("pipeline", {
+      wilder.branch(
+        wilder.cmdline_pipeline({
+          fuzzy = 1,
+          set_pcre2_pattern = 1,
+        }),
+        wilder.python_search_pipeline({
+          pattern = "fuzzy",
+        })
+      ),
+    })
+
+    local highlighters = {
+      wilder.pcre2_highlighter(),
+      wilder.basic_highlighter(),
+    }
+
+    -- Configure appearance
+    local popupmenu_renderer = wilder.popupmenu_renderer(
+      wilder.popupmenu_border_theme({
+        border = "rounded",
+        highlights = {
+          border = "Normal",
+          accent = wilder.make_hl("WilderAccent", "Pmenu", {{a = 1}, {a = 1}, {foreground = "#f4468f"}}),
+        },
+        empty_message = wilder.popupmenu_empty_message_with_spinner(),
+        highlighter = highlighters,
+        left = {
+          " ",
+          wilder.popupmenu_devicons(),
+          wilder.popupmenu_buffer_flags({
+            flags = " a + ",
+            icons = {["+"] = "", a = "", h = ""},
+          }),
+        },
+        right = {
+          " ",
+          wilder.popupmenu_scrollbar(),
+        },
+      })
+    )
+
+    local wildmenu_renderer = wilder.wildmenu_renderer({
+      highlighter = highlighters,
+      separator = " · ",
+      left = {" ", wilder.wildmenu_spinner(), " "},
+      right = {" ", wilder.wildmenu_index()},
+    })
+
+    -- Configure renderer
+    wilder.set_option("renderer", wilder.renderer_mux({
+      [":"] = popupmenu_renderer,
+      ["/"] = wildmenu_renderer,
+      substitute = wildmenu_renderer,
+    }))
+  end,
 } 

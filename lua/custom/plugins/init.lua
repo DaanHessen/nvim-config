@@ -9,9 +9,9 @@ return {
   -- Add enhanced command-line (noice.nvim) support for a nice container
   { import = 'custom.plugins.noice' },
 
-  -- Add command-line completion with wilder.nvim
-  { import = 'custom.plugins.wilder' },
-
   -- Add database support with vim-dadbod
   { import = 'custom.plugins.dadbod' },
+
+  -- Add a cursor composer agent like alternative in NVIM
+  { import = 'custom.plugins.avante' },
 }
