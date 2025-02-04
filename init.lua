@@ -1017,98 +1017,36 @@ require('lazy').setup({
       "nvim-tree/nvim-web-devicons",
       "MunifTanjim/nui.nvim",
     },
-    cmd = { "Neotree" },
     keys = {
-      { "<leader>ft", "<cmd>Neotree toggle focus<cr>", desc = "Toggle Filetree" },
+      { "<C-n>", "<cmd>Neotree toggle focus reveal<cr>", desc = "Toggle Filetree" },
     },
     init = function()
+      -- Ensure neo-tree is loaded immediately for better performance
       vim.g.neo_tree_remove_legacy_commands = true
+      if vim.fn.argc() == 1 then
+        local stat = vim.loop.fs_stat(vim.fn.argv(0))
+        if stat and stat.type == "directory" then
+          require("neo-tree")
+        end
+      end
     end,
     config = function()
       require("neo-tree").setup({
         close_if_last_window = false,
-        popup_border_style = "rounded",
         enable_git_status = true,
         enable_diagnostics = true,
+        enable_normal_mode_for_inputs = false,
+        open_files_do_not_replace_types = { "terminal", "trouble", "qf" },
+        sort_case_insensitive = true,
         use_libuv_file_watcher = true,
         sources = {
           "filesystem",
           "buffers",
           "git_status",
-          -- Disable unused sources for better performance
-          -- "document_symbols",
         },
         source_selector = {
-          winbar = false, -- Disable winbar for better performance
-        },
-        log = {
-          enable = false, -- Disable logging for better performance
-          types = {
-            diagnostics = true,
-            git = true,
-            watcher = true,
-          },
-        },
-        window = {
-          position = "left",
-          width = 30,
-          mapping_options = {
-            noremap = true,
-            nowait = true,
-          },
-          mappings = {
-            ["<space>"] = { 
-              "toggle_node", 
-              nowait = false,
-            },
-            ["<2-LeftMouse>"] = "open",
-            ["<cr>"] = "open",
-            ["l"] = "open",
-            ["h"] = "close_node",
-            ["a"] = { 
-              "add",
-              config = {
-                show_path = "relative"
-              }
-            },
-            ["A"] = "add_directory",
-            ["d"] = "delete",
-            ["r"] = "rename",
-            ["y"] = "copy_to_clipboard",
-            ["x"] = "cut_to_clipboard",
-            ["p"] = "paste_from_clipboard",
-            ["c"] = "copy",
-            ["m"] = "move",
-            ["q"] = "close_window",
-            ["R"] = "refresh",
-            ["?"] = "show_help",
-          }
-        },
-        filesystem = {
-          filtered_items = {
-            visible = false,
-            hide_dotfiles = false,
-            hide_gitignored = true,
-            cache_hidden = true, -- Cache hidden files for better performance
-          },
-          follow_current_file = {
-            enabled = true,
-            leave_dirs_open = true,
-            update_root = false, -- Disable root updates for better performance
-          },
-          group_empty_dirs = true,
-          hijack_netrw_behavior = "open_default",
-          use_libuv_file_watcher = true,
-          scan_mode = "fast", -- Use fast scan mode for better performance
-          bind_to_cwd = true, -- Bind to current working directory for better performance
-          window = {
-            mappings = {
-              ["/"] = "fuzzy_finder",
-              ["<C-x>"] = "clear_filter",
-              ["[g"] = "prev_git_modified",
-              ["]g"] = "next_git_modified",
-            },
-          },
+          winbar = false,
+          content_layout = "center",
         },
         default_component_configs = {
           indent = { padding = 0 },
@@ -1121,10 +1059,6 @@ require('lazy').setup({
           modified = {
             symbol = "[+]",
             highlight = "NeoTreeModified",
-          },
-          message = {
-            highlight = "NeoTreeMessage", -- Fix message colors
-            require_normal = true,
           },
           git_status = {
             symbols = {
@@ -1141,16 +1075,68 @@ require('lazy').setup({
             align = "right",
           },
         },
-        renderers = {
-          directory = {
-            { "indent" },
-            { "icon" },
-            { "current_filter" },
-            { "name" },
-            { "clipboard" },
-            { "diagnostics", errors_only = true },
-            { "git_status" },
+        window = {
+          position = "left",
+          width = 30,
+          mapping_options = {
+            noremap = true,
+            nowait = true,
           },
+          mappings = {
+            ["<space>"] = false, -- Disable space to avoid conflicts
+            ["<2-LeftMouse>"] = "open",
+            ["<cr>"] = "open",
+            ["l"] = "open",
+            ["h"] = "close_node",
+            ["a"] = { 
+              "add",
+              config = {
+                show_path = "relative"
+              }
+            },
+            ["d"] = "delete",
+            ["r"] = "rename",
+            ["y"] = "copy_to_clipboard",
+            ["x"] = "cut_to_clipboard",
+            ["p"] = "paste_from_clipboard",
+            ["c"] = "copy",
+            ["m"] = "move",
+            ["q"] = "close_window",
+            ["R"] = "refresh",
+            ["?"] = "show_help",
+            ["/"] = "fuzzy_finder",
+            ["<C-x>"] = "clear_filter",
+            ["[g"] = "prev_git_modified",
+            ["]g"] = "next_git_modified",
+          }
+        },
+        filesystem = {
+          filtered_items = {
+            visible = false,
+            hide_dotfiles = false,
+            hide_gitignored = true,
+            hide_by_name = {
+              ".git",
+              "node_modules",
+            },
+            always_show = {
+              ".gitignored",
+            },
+            never_show = {
+              ".DS_Store",
+              "thumbs.db",
+            },
+            cache_hidden = true,
+          },
+          follow_current_file = {
+            enabled = true,
+            leave_dirs_open = true,
+          },
+          group_empty_dirs = true,
+          hijack_netrw_behavior = "open_default",
+          use_libuv_file_watcher = true,
+          scan_mode = "fast",
+          bind_to_cwd = true,
         },
         event_handlers = {
           {
@@ -1163,7 +1149,6 @@ require('lazy').setup({
       })
 
       -- Add highlight groups for messages
-      vim.api.nvim_set_hl(0, "NeoTreeMessage", { fg = "#89b4fa", bold = true })
       vim.api.nvim_set_hl(0, "NeoTreeModified", { fg = "#f38ba8" })
     end,
   },
@@ -1245,13 +1230,3 @@ vim.keymap.set("n", "<leader>tt", function()
     vim.o.showtabline = 0
   end
 end, { desc = "Toggle Tabline" })
-
--- [Key mapping: Toggle both FileTree and Tabline]
-vim.keymap.set("n", "<leader>ftt", function()
-  vim.cmd("Neotree toggle")
-  if vim.o.showtabline == 0 then
-    vim.o.showtabline = 2
-  else
-    vim.o.showtabline = 0
-  end
-end, { desc = "Toggle both FileTree and Tabline" })
