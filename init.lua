@@ -84,6 +84,11 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
+-- Set standard indentation settings
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.tabstop = 2
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -990,11 +995,18 @@ require('lazy').setup({
   -- require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
-  require 'kickstart.plugins.autopairs',
+  -- require 'kickstart.plugins.autopairs',  -- We now have our own improved version
   -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  -- require 'kickstart.plugins.gitsigns',
   require 'custom.plugins.noice',
-  -- require 'kickstart.plugins.wilder',  -- wilder is no longer needed because noice.nvim provides the enhanced cmdline UI.
+  require 'custom.plugins.nvim-tree',
+  require 'custom.plugins.editorconfig',
+  require 'custom.plugins.nerdcommenter',
+  require 'custom.plugins.lualine',
+  require 'custom.plugins.completion',
+  require 'custom.plugins.terminal',
+  require 'custom.plugins.indent',
+  require 'custom.plugins.keymaps',
   require 'custom.plugins.',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -1010,149 +1022,6 @@ require('lazy').setup({
 
   -- [Filetree and Tabs Plugins]
   {
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v3.x",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons",
-      "MunifTanjim/nui.nvim",
-    },
-    keys = {
-      { "<C-n>", "<cmd>Neotree toggle focus reveal<cr>", desc = "Toggle Filetree" },
-    },
-    init = function()
-      -- Ensure neo-tree is loaded immediately for better performance
-      vim.g.neo_tree_remove_legacy_commands = true
-      if vim.fn.argc() == 1 then
-        local stat = vim.loop.fs_stat(vim.fn.argv(0))
-        if stat and stat.type == "directory" then
-          require("neo-tree")
-        end
-      end
-    end,
-    config = function()
-      require("neo-tree").setup({
-        close_if_last_window = false,
-        enable_git_status = true,
-        enable_diagnostics = true,
-        enable_normal_mode_for_inputs = false,
-        open_files_do_not_replace_types = { "terminal", "trouble", "qf" },
-        sort_case_insensitive = true,
-        use_libuv_file_watcher = true,
-        sources = {
-          "filesystem",
-          "buffers",
-          "git_status",
-        },
-        source_selector = {
-          winbar = false,
-          content_layout = "center",
-        },
-        default_component_configs = {
-          indent = { padding = 0 },
-          icon = {
-            folder_closed = "",
-            folder_open = "",
-            folder_empty = "",
-            default = "",
-          },
-          modified = {
-            symbol = "[+]",
-            highlight = "NeoTreeModified",
-          },
-          git_status = {
-            symbols = {
-              added = "",
-              modified = "",
-              deleted = "✖",
-              renamed = "󰁕",
-              untracked = "",
-              ignored = "",
-              unstaged = "󰄱",
-              staged = "",
-              conflict = "",
-            },
-            align = "right",
-          },
-        },
-        window = {
-          position = "left",
-          width = 30,
-          mapping_options = {
-            noremap = true,
-            nowait = true,
-          },
-          mappings = {
-            ["<space>"] = false, -- Disable space to avoid conflicts
-            ["<2-LeftMouse>"] = "open",
-            ["<cr>"] = "open",
-            ["l"] = "open",
-            ["h"] = "close_node",
-            ["a"] = { 
-              "add",
-              config = {
-                show_path = "relative"
-              }
-            },
-            ["d"] = "delete",
-            ["r"] = "rename",
-            ["y"] = "copy_to_clipboard",
-            ["x"] = "cut_to_clipboard",
-            ["p"] = "paste_from_clipboard",
-            ["c"] = "copy",
-            ["m"] = "move",
-            ["q"] = "close_window",
-            ["R"] = "refresh",
-            ["?"] = "show_help",
-            ["/"] = "fuzzy_finder",
-            ["<C-x>"] = "clear_filter",
-            ["[g"] = "prev_git_modified",
-            ["]g"] = "next_git_modified",
-          }
-        },
-        filesystem = {
-          filtered_items = {
-            visible = false,
-            hide_dotfiles = false,
-            hide_gitignored = true,
-            hide_by_name = {
-              ".git",
-              "node_modules",
-            },
-            always_show = {
-              ".gitignored",
-            },
-            never_show = {
-              ".DS_Store",
-              "thumbs.db",
-            },
-            cache_hidden = true,
-          },
-          follow_current_file = {
-            enabled = true,
-            leave_dirs_open = true,
-          },
-          group_empty_dirs = true,
-          hijack_netrw_behavior = "open_default",
-          use_libuv_file_watcher = true,
-          scan_mode = "fast",
-          bind_to_cwd = true,
-        },
-        event_handlers = {
-          {
-            event = "file_opened",
-            handler = function()
-              require("neo-tree.command").execute({ action = "close" })
-            end,
-          },
-        },
-      })
-
-      -- Add highlight groups for messages
-      vim.api.nvim_set_hl(0, "NeoTreeModified", { fg = "#f38ba8" })
-    end,
-  },
-  {
     "akinsho/bufferline.nvim",
     version = "*",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -1161,7 +1030,7 @@ require('lazy').setup({
         options = {
           diagnostics = "nvim_lsp",
           offsets = {
-            { filetype = "neo-tree", text = "File Explorer", text_align = "left" },
+            { filetype = "NvimTree", text = "File Explorer", text_align = "left" },
           },
         },
       })
@@ -1192,13 +1061,6 @@ require('lazy').setup({
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 
--- [Custom key mapping: Open project terminal in a new tab using Windows Terminal]
-vim.keymap.set("n", "<leader>ot", function()
-  local cwd = vim.fn.getcwd()
-  local cmd = "wt.exe new-tab -d " .. vim.fn.shellescape(cwd)
-  vim.fn.jobstart(cmd, { detach = true })
-end, { desc = "Open project terminal in a new tab" })
-
 -- [Autocommand: Set cursor position for Markdown files]
 vim.api.nvim_create_autocmd("BufReadPost", {
   pattern = "*.md",
@@ -1223,7 +1085,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 -- vim.keymap.set("n", "<leader>ft", ":Neotree toggle<CR>", { desc = "Toggle FileTree" })
 
 -- [Key mapping: Toggle Tabline]
-vim.keymap.set("n", "<leader>tt", function()
+vim.keymap.set("n", "<leader>tm", function()
   if vim.o.showtabline == 0 then
     vim.o.showtabline = 2
   else
