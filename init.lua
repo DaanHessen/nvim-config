@@ -1015,3 +1015,30 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- [Custom key mapping: Open project terminal in a new tab using Windows Terminal]
+vim.keymap.set("n", "<leader>ot", function()
+  local cwd = vim.fn.getcwd()
+  local cmd = "wt.exe new-tab -d " .. vim.fn.shellescape(cwd)
+  vim.fn.jobstart(cmd, { detach = true })
+end, { desc = "Open project terminal in a new tab" })
+
+-- [Autocommand: Set cursor position for Markdown files]
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*.md",
+  callback = function()
+    local found = false
+    local total = vim.fn.line("$")
+    for i = 1, math.min(10, total) do
+      local line = vim.fn.getline(i)
+      if line:match("^%s*$") then
+        vim.api.nvim_win_set_cursor(0, { i, 0 })
+        found = true
+        break
+      end
+    end
+    if not found then
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+    end
+  end,
+})
