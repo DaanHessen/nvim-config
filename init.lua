@@ -1018,7 +1018,7 @@ require('lazy').setup({
       "MunifTanjim/nui.nvim",
     },
     keys = {
-      { "<C-n>", "<cmd>Neotree toggle focus reveal<cr>", desc = "Toggle Filetree" },
+      { "<C-n>", "<cmd>silent! Neotree toggle focus reveal<cr>", desc = "Toggle Filetree" },
     },
     init = function()
       -- Ensure neo-tree is loaded immediately for better performance
@@ -1182,6 +1182,10 @@ require('lazy').setup({
         persist_size = true,
         close_on_exit = true,
       })
+      -- Override terminal colors for better readability
+      vim.api.nvim_set_hl(0, "TermNormal", { bg = "#1e1e2e", fg = "#cdd6f4" })
+      vim.api.nvim_set_hl(0, "TermBorder", { fg = "#7dcfff", bg = "#1e1e2e" })
+      
       vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "ToggleTerm: Enter Normal mode" })
       vim.keymap.set("n", "<leader>tt", "<cmd>ToggleTerm<CR>", { desc = "Toggle Terminal" })
       vim.api.nvim_create_user_command("TermTab", "tabnew | ToggleTerm", { desc = "Open Terminal in a new tab" })
@@ -1204,7 +1208,7 @@ require('lazy').setup({
       source = '📄',
       start = '🚀',
       task = '📌',
-      lazy = '💤 ',
+      lazy = '💤 ',s
     },
   },
 })
